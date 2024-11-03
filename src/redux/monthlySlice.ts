@@ -34,20 +34,20 @@ export const addTransaction = createAsyncThunk(
     },
 );
 
-// export const updateTransaction = createAsyncThunk(
-//     'monthly/updateTransaction',
-//     async ({ transaction, id }: { transaction: Transaction, id: number }) => {
-//         const response = await fetch(`${baseURL}/${id}`, {
-//             method: 'PUT',
-//             headers: {
-//                 'Content-Type': 'application/json',
-//             },
-//             body: JSON.stringify(transaction),
-//         });
-//         const data = await response.json();
-//         return data;
-//     },
-// );
+export const updateTransaction = createAsyncThunk(
+    'monthly/updateTransaction',
+    async ({ transaction, id }: { transaction: Transaction, id: number }) => {
+        const response = await fetch(`${baseURL}/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(transaction),
+        });
+        const data = await response.json();
+        return data;
+    },
+);
 
 // export const deleteCar = createAsyncThunk(
 //   'car/deleteCar',
@@ -89,6 +89,17 @@ const monthlySlice = createSlice({
             monthly: action.payload,
         }))
         .addCase(addTransaction.rejected, (state, action) => ({
+            ...state,
+            isLoading: false,
+            error: action.error.message || '',
+        }))
+        .addCase(updateTransaction.pending, (state) => ({ ...state, isLoading: true }))
+        .addCase(updateTransaction.fulfilled, (state, action) => ({
+            ...state,
+            isLoading: false,
+            monthly: action.payload,
+        }))
+        .addCase(updateTransaction.rejected, (state, action) => ({
             ...state,
             isLoading: false,
             error: action.error.message || '',
