@@ -1,13 +1,13 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { Transaction } from '../types/types';
+import { Transaction, MonthlyState } from '../types/types';
 
 const baseURL = 'http://127.0.0.1:3000/transactions';
 
-const initialState = {
-  data: [],
-  status: 'idle',
-  isLoading: true,
-  error: '',
+const initialState: MonthlyState = {
+  income: [],
+  expenses: [],
+  isLoading: false,
+  error: null,
 };
 
 export const fetchMonthlyData = createAsyncThunk(
@@ -69,15 +69,6 @@ export const deleteTransaction = createAsyncThunk(
     },
 );
 
-export const searchTransactions = createAsyncThunk(
-    'monthly/searchTransactions',
-    async ({ date }: { date: string }) => {
-        const response = await fetch(`${baseURL}/search?date=${encodeURIComponent(date)}`);
-        const data = await response.json();
-        return data;
-    },
-);
-
 const monthlySlice = createSlice({
   name: 'monthly',
   initialState,
@@ -94,7 +85,8 @@ const monthlySlice = createSlice({
         .addCase(fetchMonthlyData.fulfilled, (state, action) => ({
           ...state,
           isLoading: false,
-          monthly: action.payload,
+          income: action.payload.income,
+          expenses: action.payload.expenses,
         }))
         .addCase(fetchMonthlyData.rejected, (state, action) => ({
             ...state,
@@ -105,7 +97,8 @@ const monthlySlice = createSlice({
         .addCase(fetchRangeData.fulfilled, (state, action) => ({
             ...state,
             isLoading: false,
-            monthly: action.payload,
+            income: action.payload.income,
+            expenses: action.payload.expenses,
         }))
         .addCase(fetchRangeData.rejected, (state, action) => ({
             ...state,
@@ -113,49 +106,45 @@ const monthlySlice = createSlice({
             error: action.error.message || '',
         }))
         .addCase(addTransaction.pending, (state) => ({ ...state, isLoading: true }))
-        .addCase(addTransaction.fulfilled, (state, action) => ({
-            ...state,
-            isLoading: false,
-            monthly: action.payload,
-        }))
+        .addCase(addTransaction.fulfilled, (state, action) => {
+            const transaction = action.payload;
+            if (transaction.income) {
+                state.income.push(transaction);
+            } else {
+                state.expenses.push(transaction);
+            }
+            state.isLoading = false;
+        })
         .addCase(addTransaction.rejected, (state, action) => ({
             ...state,
             isLoading: false,
             error: action.error.message || '',
         }))
         .addCase(updateTransaction.pending, (state) => ({ ...state, isLoading: true }))
-        .addCase(updateTransaction.fulfilled, (state, action) => ({
-            ...state,
-            isLoading: false,
-            monthly: action.payload,
-        }))
+        .addCase(updateTransaction.fulfilled, (state, action) => {
+            const updatedTransaction = action.payload;
+            const transactionList = updatedTransaction.income ? state.income : state.expenses;
+            const index = transactionList.findIndex(t => t.id === updatedTransaction.id);
+            if (index !== -1) {
+                transactionList[index] = updatedTransaction;
+            }
+            state.isLoading = false;
+        })
         .addCase(updateTransaction.rejected, (state, action) => ({
             ...state,
             isLoading: false,
             error: action.error.message || '',
         }))
         .addCase(deleteTransaction.pending, (state) => ({ ...state, isLoading: true }))
-        .addCase(deleteTransaction.fulfilled, (state, action) => ({
+        .addCase(deleteTransaction.fulfilled, (state) => ({
             ...state,
             isLoading: false,
-            monthly: action.payload,
         }))
         .addCase(deleteTransaction.rejected, (state, action) => ({
             ...state,
             isLoading: false,
             error: action.error.message || '',
         }))
-        .addCase(searchTransactions.pending, (state) => ({ ...state, isLoading: true }))
-        .addCase(searchTransactions.fulfilled, (state, action) => ({
-            ...state,
-            isLoading: false,
-            monthly: action.payload,
-        }))
-        .addCase(searchTransactions.rejected, (state, action) => ({
-            ...state,
-            isLoading: false,
-            error: action.error.message || '',
-        }));
   },
 });
 
