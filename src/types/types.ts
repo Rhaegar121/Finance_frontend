@@ -16,6 +16,19 @@ export interface MonthlyState {
   error: string | null;
 }
 
+export interface YearlyState {
+    yearlyData: {
+        income: Transaction[];
+        expenses: Transaction[];
+    }
+    categoryData: {
+        income: Transaction[];
+        expenses: Transaction[];
+    }
+    isLoading: boolean;
+    error: string | null;
+}
+
 export interface SearchState {
     income: Transaction[];
     expenses: Transaction[];
