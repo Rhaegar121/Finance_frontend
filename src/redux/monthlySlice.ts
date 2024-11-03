@@ -49,15 +49,16 @@ export const updateTransaction = createAsyncThunk(
     },
 );
 
-// export const deleteCar = createAsyncThunk(
-//   'car/deleteCar',
-//   async ({ userId, carId }) => {
-//     await fetch(`${baseURL}/users/${userId}/monthly/${carId}`, {
-//       method: 'DELETE',
-//     });
-//     return carId;
-//   },
-// );
+export const deleteTransaction = createAsyncThunk(
+    'monthly/deleteTransaction',
+    async (id: number) => {
+        const response = await fetch(`${baseURL}/${id}`, {
+            method: 'DELETE',
+        });
+        const data = await response.json();
+        return data;
+    },
+);
 
 const monthlySlice = createSlice({
   name: 'monthly',
@@ -100,6 +101,17 @@ const monthlySlice = createSlice({
             monthly: action.payload,
         }))
         .addCase(updateTransaction.rejected, (state, action) => ({
+            ...state,
+            isLoading: false,
+            error: action.error.message || '',
+        }))
+        .addCase(deleteTransaction.pending, (state) => ({ ...state, isLoading: true }))
+        .addCase(deleteTransaction.fulfilled, (state, action) => ({
+            ...state,
+            isLoading: false,
+            monthly: action.payload,
+        }))
+        .addCase(deleteTransaction.rejected, (state, action) => ({
             ...state,
             isLoading: false,
             error: action.error.message || '',
