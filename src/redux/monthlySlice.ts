@@ -13,7 +13,16 @@ const initialState = {
 export const fetchMonthlyData = createAsyncThunk(
     'monthly/fetchMonthlyData',
     async ({ month_year }: { month_year: string }) => {
-        const response = await fetch(`${baseURL}/by_month?month_year=${encodeURIComponent(month_year)}`);
+        const response = await fetch(`${baseURL}/filter?month_year=${encodeURIComponent(month_year)}`);
+        const data = await response.json();
+        return data;
+    },
+);
+
+export const fetchRangeData = createAsyncThunk(
+    'monthly/fetchRangeData',
+    async ({ start, end }: { start: string, end: string }) => {
+        const response = await fetch(`${baseURL}/filter?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`);
         const data = await response.json();
         return data;
     },
@@ -88,6 +97,17 @@ const monthlySlice = createSlice({
           monthly: action.payload,
         }))
         .addCase(fetchMonthlyData.rejected, (state, action) => ({
+            ...state,
+            isLoading: false,
+            error: action.error.message || '',
+        }))
+        .addCase(fetchRangeData.pending, (state) => ({ ...state, isLoading: true }))
+        .addCase(fetchRangeData.fulfilled, (state, action) => ({
+            ...state,
+            isLoading: false,
+            monthly: action.payload,
+        }))
+        .addCase(fetchRangeData.rejected, (state, action) => ({
             ...state,
             isLoading: false,
             error: action.error.message || '',
