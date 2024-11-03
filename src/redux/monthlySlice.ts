@@ -60,6 +60,15 @@ export const deleteTransaction = createAsyncThunk(
     },
 );
 
+export const searchTransactions = createAsyncThunk(
+    'monthly/searchTransactions',
+    async ({ date }: { date: string }) => {
+        const response = await fetch(`${baseURL}/search?date=${encodeURIComponent(date)}`);
+        const data = await response.json();
+        return data;
+    },
+);
+
 const monthlySlice = createSlice({
   name: 'monthly',
   initialState,
@@ -112,6 +121,17 @@ const monthlySlice = createSlice({
             monthly: action.payload,
         }))
         .addCase(deleteTransaction.rejected, (state, action) => ({
+            ...state,
+            isLoading: false,
+            error: action.error.message || '',
+        }))
+        .addCase(searchTransactions.pending, (state) => ({ ...state, isLoading: true }))
+        .addCase(searchTransactions.fulfilled, (state, action) => ({
+            ...state,
+            isLoading: false,
+            monthly: action.payload,
+        }))
+        .addCase(searchTransactions.rejected, (state, action) => ({
             ...state,
             isLoading: false,
             error: action.error.message || '',
