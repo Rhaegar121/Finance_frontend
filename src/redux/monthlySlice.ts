@@ -60,12 +60,12 @@ export const updateTransaction = createAsyncThunk(
 
 export const deleteTransaction = createAsyncThunk(
     'monthly/deleteTransaction',
-    async (id: number) => {
+    async ({ id, income }: { id: number, income: boolean }) => {
         const response = await fetch(`${baseURL}/${id}`, {
             method: 'DELETE',
         });
-        const data = await response.json();
-        return data;
+        await response.json();
+        return { id, income };
     },
 );
 
@@ -136,10 +136,15 @@ const monthlySlice = createSlice({
             error: action.error.message || '',
         }))
         .addCase(deleteTransaction.pending, (state) => ({ ...state, isLoading: true }))
-        .addCase(deleteTransaction.fulfilled, (state) => ({
-            ...state,
-            isLoading: false,
-        }))
+        .addCase(deleteTransaction.fulfilled, (state, action) => {
+            const { id, income } = action.payload;
+            const transactionList = income ? state.income : state.expenses;
+            const index = transactionList.findIndex(t => t.id === id);
+            if (index !== -1) {
+                transactionList.splice(index, 1);
+            }
+            state.isLoading = false;
+        })
         .addCase(deleteTransaction.rejected, (state, action) => ({
             ...state,
             isLoading: false,
